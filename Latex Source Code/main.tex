@@ -1,0 +1,371 @@
+\documentclass[11pt,onside]{article}
+\usepackage[a4paper]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{lipsum}
+\usepackage{bm}
+\usepackage{upgreek}
+\usepackage{graphicx}
+
+
+\usepackage{amsmath}
+% mathtools for: Aboxed (put box on last equation in align envirenment)
+\usepackage{microtype} %improves the spacing between words and letters
+
+%% COLOR DEFINITIONS
+
+\usepackage[svgnames]{xcolor} % Enabling mixing colors and color's call by 'svgnames'
+
+\definecolor{MyColor1}{rgb}{0.2,0.48,0.32} %mix personal color
+\newcommand{\textb}{\color{Black} \usefont{OT1}{lmss}{m}{n}}
+\newcommand{\blue}{\color{MyColor1} \usefont{OT1}{lmss}{m}{n}}
+\newcommand{\blueb}{\color{MyColor1} \usefont{OT1}{lmss}{b}{n}}
+\newcommand{\red}{\color{LightCoral} \usefont{OT1}{lmss}{m}{n}}
+\newcommand{\green}{\color{Turquoise} \usefont{OT1}{lmss}{m}{n}}
+
+\DeclareMathOperator{\trace}{trace}
+\DeclareMathOperator{\diag}{diag}
+
+%% FONTS AND COLORS
+
+%    SECTIONS
+
+\usepackage{titlesec}
+\usepackage{sectsty}
+%%%%%%%%%%%%%%%%%%%%%%%%
+%set section/subsections HEADINGS font and color
+\sectionfont{\color{MyColor1}}  % sets colour of sections
+\subsectionfont{\color{MyColor1}}  % sets colour of sections
+
+%set section enumerator to arabic number (see footnotes markings alternatives)
+\renewcommand\thesection{\arabic{section}.} %define sections numbering
+\renewcommand\thesubsection{\thesection\arabic{subsection}} %subsec.num.
+
+%define new section style
+\newcommand{\mysection}{
+\titleformat{\section} [runin] {\usefont{OT1}{lmss}{b}{n}\color{MyColor1}} 
+{\thesection} {3pt} {} } 
+
+
+%	CAPTIONS
+\usepackage{caption}
+\usepackage{subcaption}
+%%%%%%%%%%%%%%%%%%%%%%%%
+\captionsetup[figure]{labelfont={color=Turquoise}}
+
+
+%		!!!EQUATION (ARRAY) --> USING ALIGN INSTEAD
+%using amsmath package to redefine eq. numeration (1.1, 1.2, ...) 
+\renewcommand{\theequation}{\thesection\arabic{equation}}
+
+
+
+\makeatletter
+\let\reftagform@=\tagform@
+\def\tagform@#1{\maketag@@@{(\ignorespaces\textcolor{red}{#1}\unskip\@@italiccorr)}}
+\renewcommand{\eqref}[1]{\textup{\reftagform@{\ref{#1}}}}
+\makeatother
+\usepackage{hyperref}
+\hypersetup{colorlinks=true}
+
+% For labeling top of page on every page but first one:
+\usepackage{fancyhdr}
+
+% PREPARE TITLE:
+\title{\blue \textbf{Natural Language Processing} \\
+\blue 1st Assignment \\ \(N\)-gram Language Models}
+\author{\textbf{Marina Samprovalaki} \textit{f3322310} \\ \textbf{Petros Chanas} \textit{f3322314} }
+\date{\today} % You can set the date automatically by replacing "date goes here" with "\today"
+
+\renewcommand{\rmdefault}{phv} % Arial Font
+\renewcommand{\sfdefault}{phv} % Arial Font
+
+\pagestyle{fancy}
+\fancyhead{}
+\fancyhead[CO,CE]{{\small{{\bf{1st Assignment}} - NLP - Winter Semester - Petros Chanas - Marina Samprovalaki}}}
+ 
+
+
+\begin{document}
+\maketitle
+
+\section*{Dataset Selection}
+We have selected as our coprus a sample of the book \href{https://en.wikipedia.org/wiki/Alice%27s_Adventures_in_Wonderland}{\textit{Alice in Wonderland}} by \href{https://en.wikipedia.org/wiki/Lewis_Carroll}{Lewis Carrol}. This was done on purpose as we wanted a fully diverse coprus in matters of word complexity and sentence synthesis in order for our model to be as multi-layered as possible. You can find our notebook with the full code \href{https://colab.research.google.com/drive/1vNeEjUFaHNf8esvHM9vQNERQQEozdfaX?usp=sharing}{here}.
+
+\section*{Pre-Processing the Corpus}
+Once we had chosen our corpus, the initial step in our research involved modifying the text to create a list of strings. Each string in this list represents a segment of the original text, separated by newline characters. We first convert all text to lowercase. Lowercasing plays a pivotal role in maintaining uniformity throughout the corpus, as it mitigates issues associated with case sensitivity. For instance, "Apple" and "apple" would be considered separate words in a case-sensitive context, but lowercasing harmonizes them as identical. Additionally, this procedure is of utmost importance for generalization, as it normalizes the text.
+
+\section*{Splitting the Dataset}
+To facilitate the training and testing of our model, we employed techniques to partition our corpus into distinct segments, allowing them to be processed separately and independently. It's important to note that we began this process by shuffling the data for randomness and bias avoidance. We created three sets: a training set, a development set (also known as a validation set), and a test set. The training set is used to train the model, while the development (validation) set is used for hyperparameter tuning, model selection, and assessing model performance during training. As for the testing set, is used for evaluation.
+
+Having a separate development set is crucial because it enables us to experiment with different configurations, adjust model parameters, and select the best model without contaminating the test set. By monitoring model performance on the development set, we can make adjustments to prevent overfitting. Many machine learning algorithms have hyperparameters (e.g., learning rate, regularization strength) that need to be set before training. The development set is used to fine-tune these hyperparameters to achieve the best possible model performance, as is the case in our project.
+\newline\newline
+The dataset was divided into three sets according to our specific prerequisites:
+\begin{itemize}
+    \item The training set with a said ratio of 0.6 (\(P_{train} = 0.7\))
+    \item The development set with a said ratio of 0.15 (\(P_{dev} = 0.15\))
+    \item The test set with a said ratio of 0.15 (\(P_{test} = 0.15\))
+\end{itemize}
+
+
+\subsection*{Vocabulary and OOV words}
+It's crucial to highlight that our model had to be specifically designed to handle unknown words. To address this, we adopted a prudent approach of constructing a vocabulary. In this process, words with a frequency exceeding 10 were included in the vocabulary, while the remaining words were labeled with the token \verb|'UNK'| to signify unknown terms. It's important to note that this vocabulary creation and UNK replacement is executed prior to dividing our corpus into the three subsets. This strategic approach enabled our model to be trained while effectively managing UNK words.
+Out-of-Vocabulary (OOV) words are important in the context of N-gram language models and natural language processing for several reasons: 
+\begin{enumerate}
+    \item \textbf{Robustness to new data}: OOV words are words that the model hasn't seen during training. In real-world applications, it's common to encounter words that were not present in the training data. OOV handling ensures that the model doesn't break or perform poorly when dealing with previously unseen words. 
+    \item \textbf{Smoothing technique}: N-gram models often use smoothing techniques like Laplace (add-one) smoothing or Good-Turing smoothing to handle unseen N-grams, which include OOV words. These techniques allocate some probability mass to unseen events, making it possible to estimate probabilities for OOV words and avoid zero probabilities. 
+    \item \textbf{Vocabulary expansion}: As language evolves, new words are constantly introduced. OOV handling allows a model to adapt to these changes without needing retraining. By having a mechanism to deal with OOV words, N-gram models can make informed predictions for words that were not in the original training data. 
+\section*{Tokenization}
+We had to tokenize the text stored in the training dataset. Tokenization is the process of splitting text into individual words or tokens. In this case, the code uses nltk's \verb|word_tokenize| function.  
+
+
+\subsection*{Tokens Frequency Distribution}
+Token frequency is a useful concept when building an n-gram language model, as it helps in estimating the probabilities of n-grams within a given text corpus. N-gram language models are statistical models that capture the co-occurrence of sequences of n tokens (words, characters, etc.) in a text.Token frequency is important for several reasons: 
+\begin{enumerate}
+    \item \textbf{Probability Estimation}: In an n-gram language model, you estimate the probability of a specific n-gram by counting how often that n-gram appears in your training data. The frequency of a token (or word) is a part of these counts, which helps in calculating the probability of a specific n-gram occurring in a given context. 
+    \item \textbf{Smoothing}: Token frequencies are also essential for smoothing techniques in language modeling. Smoothing methods help address the problem of unseen n-grams or n-grams with low frequencies in the training data. Techniques like \href{https://en.wikipedia.org/wiki/Additive_smoothing}{Laplace} (add-one) smoothing or \href{https://en.wikipedia.org/wiki/Kneser–Ney_smoothing}{Knesser-Ney} smoothing rely on token frequencies to redistribute probability mass. 
+    % \item \textbf{Backoff and Interpolation}: When working with n-grams of varying lengths (e.g., unigrams, bigrams, trigrams), token frequencies can be used in backoff and interpolation methods to combine information from different n-grams. This allows for a more accurate prediction of next tokens. 
+    \item \textbf{Language Model Evaluation}: When evaluating the quality of an n-gram language model, token frequencies can help you measure how well the model fits the training data and how well it generalizes to unseen data. 
+\end{enumerate}
+
+\section*{\(N\)-grams frequency}
+
+It is crucial to perform \(n\)-gram counting for unigrams, bigrams, and trigrams within the given sentences. This is a common pre-processing step when building language models, as it helps in understanding the distribution of n-grams in the text. After the tokenization of the sentences, we count individually the occurence of unigrams (single tokens), bigrams (pairs of consecutive tokens) and trigrams (triplets of consecutive tokens) within those sentences and we print the most common \(n\)-gram for each \(n\)-gram type.
+
+\[P(w), P(w_i | w_i-1), P(w_i | w_i-2, w_i-1), \forall w_n \in C\]
+
+\subsection*{\(bi\)-gram probability}
+Now that we have the frequency of said tokens it is time to compute the corresponding probability for each counter.
+\subsubsection*{Using Laplace Smothing}
+
+Laplace smoothing, also referred to as add-one smoothing or add-$k$ smoothing, is a technique employed to tackle the challenge of zero probabilities in probability distributions. To address this issue, Laplace smoothing involves adding a small, constant value (typically 1 or a small positive integer) to the count of each event in the dataset. 
+
+We use the following formula to compute:
+
+\[P(w_2|w_1) = \frac{C(w_1,w_2) + \alpha}{C(w_1) + \alpha \cdot|V|}\]
+\begin{itemize}
+    \item \(C(w_1,w_2) \) : bigram count
+    \item \(C(w_1)\)  : unigram count
+    \item $ 0 \leq\alpha \leq1 $ :  smoothing hyper-parameter
+    \item \(|V|\): vocabulary size
+\end{itemize}
+
+\subsection*{\(tri\)-gram probability}
+
+\subsubsection*{Using Laplace Smoothing}
+When it comes to trigrams, the previously mentioned formula takes on the following form:
+
+$$ P(w_3|w_1,w_2) = \frac{C(w_1,w_2,w_3) + \alpha}{C(w_1,w_2) + \alpha \cdot|V|} $$
+\begin{itemize}
+    \item $ C(w_1, w_2, w_3) $: Trigram count, the number of times the trigram $(w1, w2, w3)$ appears in the corpus.
+    \item $ C(w_1, w_2) $: Bigram count, the number of times the bigram \( (w1, w2)\) appears in the corpus.
+    \item $ 0 \leq \alpha \leq 1 $:  Smoothing hyper-parameter.
+    \item \(|V|\): vocabulary size
+\end{itemize}
+
+\subsubsection*{Using Kneser-Ney smoothing}
+
+This probability for a given token $w_i$ is proportional to the \textbf{number of bigrams which it completes}: 
+\newline
+
+\[P_{continuation}(w_i) \propto \ |{w_{i -1}:c(w_{i-1}, w_i) > 0}|
+
+This quantity is normalized by dividing by the total number of bigram types (note that $j$ is a free variable): 
+
+\[P_{continuation}(w_i)=\frac{|{w_{i -1}:c(w_{i-1}, w_i) > 0}|}{|{w_{j -1}:c(w_{j-1}, w_j) > 0}|}\]
+So implementing this idea in our code we get the following relation:
+
+\[P(w_i | w_{i-1}) = \frac{{C(w_{i-1}, w_i) - \delta}_{+}}{{C(w_{i-1})}} + \lambda(w_{i-1}) \cdot P_{\text{continuation}}(w_i)
+\]
+
+
+\subsection*{Kneser-Ney Smoothing}
+
+Kneser-Ney smoothing is a more sophisticated smoothing technique compared to Laplace (add-one) smoothing. It aims to address some of the limitations of Laplace smoothing, particularly in modeling n-gram probabilities. Below is the mathematical representation of Kneser-Ney smoothing and a comparison with Laplace smoothing. 
+
+The Kneser-Ney smoothing method uses several components and formulas to estimate n-gram probabilities. For simplicity, let's consider the case of bigram probabilities and it evolved from \textbf{\href{https://isip.piconepress.com/courses/msstate/ece_8463/lectures/current/lecture_33/lecture_33_07.html}{absolute-discounting interpolation}}, which makes use of both higher-order (i.e., higher-\textit{n}) and lower-order language models, reallocating some probability mass from 4-grams or 3-grams to simpler unigram models. The formula for absolute-discounting smoothing as applied to a bigram language model is presented below: 
+
+\[P_{abs}(w_i|w_{i -1}) = \frac{\max((c(w_{i-1}w_i)-\delta), 0)}{\sum\limits_{w'}c(w_{i-1}w')} + a\cdot p_{abs}(w_i)\]
+Here $\delta$ refers to a fixed \textbf{discount} value, and $\alpha$ is a normalizing constant.  
+
+The essence of Kneser-Ney is in the clever observation that we can take advantage of this interpolation as a sort of backoff model. When the first term (in this case, the discounted relative bigram count) is near zero, the second term (the lower-order model) carries more weight. Inversely, when the higher-order model matches strongly, the second lower-order term has little weight.
+
+% The Kneser-Ney design retains the first term of absolute discounting interpolation, but rewrites the second term to take advantage of this relationship. Whereas absolute discounting interpolation in a bigram model would simply default to a unigram model in the second term, Kneser-Ney depends upon the idea of a \textit{continuation probability} associated with each unigram.
+
+% Now in order to evaluate and assess the efficacy of the algorithm in our paradigm we assume that there exists a word $w_k$ that is abundant within our corpus. The common example used to demonstrate the efficacy of Kneser-Ney is the phrase \textit{\href{http://www.foldl.me/2014/kneser-ney-smoothing/}{San Francisco}}. Suppose this phrase is abundant in a given training corpus. Then the unigram probability of \textit{Francisco} will also be high. If we unwisely use something like absolute discounting interpolation in a context where our bigram model is weak, the unigram model portion may take over and lead to some strange results. 
+% A fluent English speaker reading this sentence knows that the word \textit{glasses} should fill in the blank. But since \textit{San Francisco} is a common term, absolute-discounting interpolation might declare that \textit{Francisco} is a better fit: $P_{abs}(Francisco) > P_{abs}(Glasses)$
+
+% Kneser-Ney fixes this problem by asking a slightly harder question of our lower-order model. Whereas the unigram model simply provides how likely a word $w_i$
+% is to appear, Kneser-Ney’s second term determines how likely a word $w_i$ is to appear in an unfamiliar bigram context. 
+
+\textbf{Kneser-Ney}:
+
+\[P_{KN}(w_i|w_{i-1}) = \frac{\max((c(w_{i-1}w_i)-\delta), 0)}{\sum\limits_{w'}c(w_{i-1}w')} + \lambda\frac{|{w_{i -1}:c(w_{i-1}, w_i) > 0}|}{|{w_{j -1}:c(w_{j-1}, w_j) > 0}|}\]
+
+where $\lambda$ serves as a normalizing constant
+$$\lambda(w_{i-1}) = \frac{\delta}{c(w_{i-1})}|{w':c(w_{i-1}, w') > 0}|$$
+ 
+\textit{Note that the denominator of the first term can be simplified to a unigram count.}
+
+\textbf{Kneser-Ney Interpolated}
+
+\[P_{KN}(w_i|w_{i-1}) = \frac{\max((c(w_{i-1}w_i)-\delta), 0)}{c(w_{i-1})} + \lambda\frac{|{w_{i -1}:c(w_{i-1}, w_i) > 0}|}{|{w_{j -1}:c(w_{j-1}, w_j) > 0}|}\]
+
+\section*{Create and count n-grams frequency}
+We needed to count the occurrences of n-grams in the training data. Then, we calculated the probabilities associated with each n-gram and used these probabilities to construct the n-gram language model itself.
+\subsection*{Bigram}
+To train the bigram language model, our approach involved several key steps. Firstly, we pre-processed each sentence by adding "<start>" at the beginning and "<end>" at the end. This is a common practice in language modeling and is used to demarcate the start and end of sentences. Next, we implemented a nested loop to iterate through the bigrams in order to calculate the bigram probability for each pair of tokens. To account for unseen or low-frequency bigrams, we applied Laplace smoothing. 
+\subsection*{Trigram}
+To train the trigram language model, we follow a similar process. However, with trigrams, we had to go a step further and add "<start1>" and "<start2>" at the very beginning of the sentence. This is because trigrams use the last two words to calculate the probability. The rest of the process, including iterating through trigrams and applying Laplace smoothing, is consistent with the approach used for bigrams.
+\subsection*{Interpolation}
+
+Interpolation allows us to seamlessly combine the strengths of different $n$-gram models to enhance predictive accuracy and adapt to various text data scenarios. Interpolation provides a parameter "lambda" (\(\lambda\)) representing the weight assigned to trigram models compared to bigram models. By employing interpolation, we can simultaneously consider both trigram and bigram models when calculating the probability of word sequences. This balance between the two models helps mitigate data sparsity issues and allows for improved predictions. The result is a more accurate language model, as indicated by cross entropy and perplexity values.
+
+
+\[
+P(w_n | w_{n-2}, w_{n-1}) = \lambda \cdot P(w_n | w_{n-2}, w_{n-1}) + (1 - \lambda) \cdot P(w_n | w_{n-1})
+\]
+
+
+
+\section*{Hyper-parameters Tuning}
+Frequently, our models do not perform as effectively as we initially anticipate after training. To enhance their performance, we employ a crucial procedure known as Hyperparameter Tuning.
+% But what exactly are hyperparameters? By their name, we can discern that they carry more significance than typical parameters. Hyperparameters are configuration settings that are not learned from the data but are established prior to the training phase in a machine learning model. They are fundamental because they govern various aspects of the machine learning algorithm and the model itself.
+
+Hyperparameter tuning is the methodical process of searching for the best hyperparameter values that result in the most accurate and effective models. This process involves fine-tuning these hyperparameters to identify the optimal combination that minimizes errors and maximizes the model's predictive power on unseen data. To achieve this, we utilize the validation subset created in the initial step. The process requires the selection of specific hyperparameters to fine-tune. In our case, we opted to focus on alpha for Laplace and lambda for Interpolation.
+
+\section*{After-tuning}
+The figures below depict the cross-entropy and perplexity values before and after tuning. The observed decrease in the trigram model's performance after tuning can be attributed to a combination of factors. One of the most important is that the trigram model, being more complex and considering the conditional probability of a word based on the previous two words, is prone to overfitting. Our corpus is not so extended so the training and validation sets are not so big enough. As a result, it is easy for a model to be overfitted. Secondly, the choice of hyperparameters, including smoothing techniques and interpolation weights, is crucial. If not properly tuned, these settings can further exacerbate the model's susceptibility to overfitting. As a result, the trigram model may struggle to generalize effectively to unseen data, leading to higher perplexity scores in the evaluation. 
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{HC_before_after.png}
+    \caption{Cross Entropy before and after Tuning}
+    \label{fig:your_label}
+\end{figure}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{perplexity_before_after.png}
+    \caption{Perplexity before and after Tuning}
+    \label{fig:your_label}
+\end{figure}
+
+
+
+
+\section*{Generate Completions}
+
+In both bigram and trigram models, sentence completion involves estimating the conditional probability of the next word in a sentence given the context provided by the preceding words. This probability is used to suggest the most likely word to complete the sentence. While bigram models are simple and computationally efficient, trigram models offer more context-aware predictions, which can be valuable in tasks like text generation, autocomplete, and machine translation. The choice between bigram and trigram models often depends on the specific application and the trade-off between model complexity and accuracy. 
+
+In our model we have the following approach:
+\begin{enumerate}
+    \item We eliminate all \verb|UNK| tokens from our corpus as it is the most prevalent one by occurrence
+    \item We find the bigram with the greatest probability in the filtered corpus
+    \item We select the next bigram to be added to the sentence based on the bigram's probability, ensuring that the sentence generation favors bigrams with higher probabilities. 
+    \item We update the list of the already stored words for the next iteration to be the second word of the selected bigram. 
+\end{enumerate}
+\\
+The same procedure is strictly followed to the trigram model with the same modular steps.
+
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{predictions.png}
+    \caption{Prediction examples for both bigram and trigram models}
+    \label{fig:your_label}
+\end{figure}
+
+\section*{Context-aware Spelling Corrector}
+The subsequent phase of our project involved the development of a context-aware spelling corrector, which utilizes our trigram model, a beam search decoder, and the \href{https://tedboy.github.io/nlps/generated/generated/nltk.edit_distance.html}{Levenshtein distance} This spelling corrector is designed to rectify any errors or mistakes in words, enhancing the accuracy and readability of text. As for the algorithm, we first generate candidate corrections for the given word based on their Levenshtein distance from the original word. Then, we compute a score for each candidate correction based on a combination of the negative Levenshtein distance and our trigram language model score. Last but not least, we implement a Beam Search decoder for each word. Then, we select the top candidates based on their scores and narrows down the sequences to the best ones. The best correction for the word is the one with the maximum score. \\
+\newline
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{correction.png}
+    \caption{Misspelled and corrected examples}
+    \label{fig:your_label}
+\end{figure}
+As observed, there are instances where our corrector performed as anticipated, while in some cases, it did not yield the expected results. This variability can be attributed to either the model's inability to identify the most suitable correction or the fact that the word in question did not exist in the vocabulary.
+
+\section*{Evaluate the Corrector}
+The next phase involved the utilization of an extended dataset to evaluate our Corrector. We chose to use the same test dataset that we previously employed for assessing our language models. However, we introduced a modification by replacing each non-space character of every test sentence with another random non-space character, with a small probability. Additionally, we attempted to replace each letter with another random letter. In cases where the word was represented as the "UNK" token, we replaced it with "y" in the list. We specifically selected 20 misspelled sentences and applied the Corrector to rectify them. As observed, the Corrector was successful in correcting some of the errors, but some mistakes still remained. 
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.7\textwidth]{test_corrector.png}
+    \caption{Misspelled and corrected sentences from the test set}
+    \label{fig:your_label}
+\end{figure}
+
+
+
+\section*{Metrics}
+WER and CER are metrics that indicate the amount of text in a handwriting that the applied HTR model did not read correctly
+% \underline{CER AND WER COMPARISON ASSESSMENT}
+% % \\
+% A WER of 0.12 means that, on average, 12\% of the words in the recognized text (output of the bigram/trigram model) do not match the corresponding words in the reference or ground truth text. This indicates that there are word-level errors in the system's output. 
+
+% A CER of 0.08 means that, on average, 8\% of the characters in the recognized text do not match the corresponding characters in the reference text. This indicates that there are character-level errors in the system's output. 
+
+% \textbf{So that means that the bigram/trigram model is performing relatively well at the character level, with a CER of 0.08. This suggests that, on average, character-level accuracy is quite high, and most individual characters in the recognized text match those in the reference text despite relative noise being detected on word level. We make that conclusion based on the  WER of 0.12 which indicates that the system struggles with word-level accuracy, and 12\% of the words are incorrect in the recognized text compared to the reference text. This suggests that there are word substitutions, deletions, or insertions in the system's output directly related with the format of the text.} 
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=0.75\linewidth]{avgCerWer.png}
+%     \caption{CER,WER Comparison}
+%     \label{fig:enter-label}
+% \end{figure}
+
+\subsection*{Word Error rate (WER)}
+WER is a metric used to evaluate the performance of systems that generate or correct sequences of words, such as automatic speech recognition systems or spelling correction systems. It measures the number of word-level errors made by a system when comparing its output to the reference or ground truth text. 
+$$WER = \frac{S + I + D}{N}$$
+\begin{enumerate}
+    \item $ S $ : the number of substitutions
+    \item $ i $ : the number of insertions
+    \item $ D $ : the number of deletions
+    \item  $N$: the total number of words in the reference
+\end{enumerate}
+
+% In practice, WER is often expressed as a percentage by multiplying the ratio WERWER by 100.
+% WER is a valuable evaluation metric for ASR systems because it provides a comprehensive measure of how well the system transcribes spoken language. It takes into account not only substitutions but also insertions and deletions, which are common in real-world scenarios. Lower WER values indicate better transcription accuracy, with a WER of 0\% indicating a perfect transcription.
+
+% This is useful for evaluating the accuracy of a correction system that attempts to correct sentences and determine how closely the corrected sentences match the reference sentences in terms of word-level errors. The average WER provides a summary of the correction system's performance across the dataset. 
+
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=0.75\linewidth]{wer.png}
+%     \caption{Average WER in relation to 3 corrected sentences}
+%     \label{fig:Averager WER for 3 sentences}
+% \end{figure}
+
+ 
+\subsection*{Character Error Rate (CER)}
+CER is similar to WER but operates at the character level. It measures the accuracy of character-level transcriptions or corrections. CER quantifies the number of character-level errors made by a system when comparing its output to the reference text. Errors include substitutions, insertions, and deletions of individual characters. 
+$$WER = \frac{S + I + D}{N}$$
+
+% A WER of 0.12 means that, on average, 12\% of the words in the recognized text (output of the bigram/trigram model) do not match the corresponding words in the reference or ground truth text. This indicates that there are word-level errors in the system's output. 
+
+% A CER of 0.08 means that, on average, 8\% of the characters in the recognized text do not match the corresponding characters in the reference text. This indicates that there are character-level errors in the system's output. 
+
+% \textbf{So that means that the bigram/trigram model is performing relatively well at the character level, with a CER of 0.08. This suggests that, on average, character-level accuracy is quite high, and most individual characters in the recognized text match those in the reference text despite relative noise being detected on word level. We make that conclusion based on the  WER of 0.12 which indicates that the system struggles with word-level accuracy, and 12\% of the words are incorrect in the recognized text compared to the reference text. This suggests that there are word substitutions, deletions, or insertions in the system's output directly related with the format of the text.} 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{metrics.png}
+    \caption{Average WER and CER}
+    \label{fig:Averager WER for 3 sentences}
+\end{figure}
+
+% \begin{itemize}
+%     \item $S$ is the number of character substitutions, which occur when a character in the recognized text is different from the corresponding character in the reference text. 
+%     \item  $D$ is the number of character deletions, which occur when a character in the reference text is missing in the recognized text. 
+%     \item $I$ is the number of character insertions, which occur when an extra character is present in the recognized text that is not in the reference text. 
+%     \item $Ν$ is the total number of characters in the reference text. 
+% \end{itemize}
+
+%  \begin{figure}
+%      \centering
+%      \includegraphics[width=0.75\linewidth]{cer.png}
+%      \caption{Average CER for each character}
+%      \label{fig:Avarage CER}
+%  \end{figure}
+
+\end{document}
