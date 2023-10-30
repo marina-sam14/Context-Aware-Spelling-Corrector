@@ -15,6 +15,9 @@ We calculated the language cross-entropy and perplexity on a test subset, treati
 We excluded probabilities related to start tokens but included probabilities for end tokens.
 We counted end tokens but not start, start1, or start2 tokens in the total test corpus length.
 
+## Tuning
+We conducted hyperparameter tuning to optimize the performance of our language models.
+
 ## Autocompletion
 
 We developed code to demonstrate how bigram and trigram models can autocomplete incomplete sentences.
