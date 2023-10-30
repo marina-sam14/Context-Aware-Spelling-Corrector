@@ -1,4 +1,4 @@
-# Context-Aware-Spelling-Correction
+# Context-Aware-Spelling-Corrector
 
 This academic project is the result of our efforts to create a context-aware spelling corrector using n-grams. The following steps outline what we did in this project:
 
