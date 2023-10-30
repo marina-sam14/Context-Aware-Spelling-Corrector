@@ -75,7 +75,7 @@
 \title{\blue \textbf{Natural Language Processing} \\
 \blue 1st Assignment \\ \(N\)-gram Language Models}
 \author{\textbf{Marina Samprovalaki} \textit{f3322310} \\ \textbf{Petros Chanas} \textit{f3322314} }
-\date{\today} % You can set the date automatically by replacing "date goes here" with "\today"
+% \date{\today} % You can set the date automatically by replacing "date goes here" with "\today"
 
 \renewcommand{\rmdefault}{phv} % Arial Font
 \renewcommand{\sfdefault}{phv} % Arial Font
@@ -181,7 +181,7 @@ So implementing this idea in our code we get the following relation:
 
 \subsection*{Kneser-Ney Smoothing}
 
-Kneser-Ney smoothing is a more sophisticated smoothing technique compared to Laplace (add-one) smoothing. It aims to address some of the limitations of Laplace smoothing, particularly in modeling n-gram probabilities. Below is the mathematical representation of Kneser-Ney smoothing and a comparison with Laplace smoothing. 
+Kneser-Ney smoothing is a more sophisticated smoothing technique. It aims to address some of the limitations of Laplace smoothing, particularly in modeling n-gram probabilities. Below is the mathematical representation of Kneser-Ney smoothing.
 
 The Kneser-Ney smoothing method uses several components and formulas to estimate n-gram probabilities. For simplicity, let's consider the case of bigram probabilities and it evolved from \textbf{\href{https://isip.piconepress.com/courses/msstate/ece_8463/lectures/current/lecture_33/lecture_33_07.html}{absolute-discounting interpolation}}, which makes use of both higher-order (i.e., higher-\textit{n}) and lower-order language models, reallocating some probability mass from 4-grams or 3-grams to simpler unigram models. The formula for absolute-discounting smoothing as applied to a bigram language model is presented below: 
 
@@ -189,7 +189,7 @@ The Kneser-Ney smoothing method uses several components and formulas to estimate
 Here $\delta$ refers to a fixed \textbf{discount} value, and $\alpha$ is a normalizing constant.  
 
 The essence of Kneser-Ney is in the clever observation that we can take advantage of this interpolation as a sort of backoff model. When the first term (in this case, the discounted relative bigram count) is near zero, the second term (the lower-order model) carries more weight. Inversely, when the higher-order model matches strongly, the second lower-order term has little weight.
-
+\\
 % The Kneser-Ney design retains the first term of absolute discounting interpolation, but rewrites the second term to take advantage of this relationship. Whereas absolute discounting interpolation in a bigram model would simply default to a unigram model in the second term, Kneser-Ney depends upon the idea of a \textit{continuation probability} associated with each unigram.
 
 % Now in order to evaluate and assess the efficacy of the algorithm in our paradigm we assume that there exists a word $w_k$ that is abundant within our corpus. The common example used to demonstrate the efficacy of Kneser-Ney is the phrase \textit{\href{http://www.foldl.me/2014/kneser-ney-smoothing/}{San Francisco}}. Suppose this phrase is abundant in a given training corpus. Then the unigram probability of \textit{Francisco} will also be high. If we unwisely use something like absolute discounting interpolation in a context where our bigram model is weak, the unigram model portion may take over and lead to some strange results. 
@@ -197,15 +197,16 @@ The essence of Kneser-Ney is in the clever observation that we can take advantag
 
 % Kneser-Ney fixes this problem by asking a slightly harder question of our lower-order model. Whereas the unigram model simply provides how likely a word $w_i$
 % is to appear, Kneser-Ney’s second term determines how likely a word $w_i$ is to appear in an unfamiliar bigram context. 
-
 \textbf{Kneser-Ney}:
 
 \[P_{KN}(w_i|w_{i-1}) = \frac{\max((c(w_{i-1}w_i)-\delta), 0)}{\sum\limits_{w'}c(w_{i-1}w')} + \lambda\frac{|{w_{i -1}:c(w_{i-1}, w_i) > 0}|}{|{w_{j -1}:c(w_{j-1}, w_j) > 0}|}\]
 
 where $\lambda$ serves as a normalizing constant
-$$\lambda(w_{i-1}) = \frac{\delta}{c(w_{i-1})}|{w':c(w_{i-1}, w') > 0}|$$
+\\
+% $$\lambda(w_{i-1}) = \frac{\delta}{c(w_{i-1})}|{w':c(w_{i-1}, w') > 0}|$$
  
-\textit{Note that the denominator of the first term can be simplified to a unigram count.}
+% \textit{Note that the denominator of the first term can be simplified to a unigram count.}
+
 
 \textbf{Kneser-Ney Interpolated}
 
@@ -235,23 +236,20 @@ Frequently, our models do not perform as effectively as we initially anticipate 
 Hyperparameter tuning is the methodical process of searching for the best hyperparameter values that result in the most accurate and effective models. This process involves fine-tuning these hyperparameters to identify the optimal combination that minimizes errors and maximizes the model's predictive power on unseen data. To achieve this, we utilize the validation subset created in the initial step. The process requires the selection of specific hyperparameters to fine-tune. In our case, we opted to focus on alpha for Laplace and lambda for Interpolation.
 
 \section*{After-tuning}
-The figures below depict the cross-entropy and perplexity values before and after tuning. The observed decrease in the trigram model's performance after tuning can be attributed to a combination of factors. One of the most important is that the trigram model, being more complex and considering the conditional probability of a word based on the previous two words, is prone to overfitting. Our corpus is not so extended so the training and validation sets are not so big enough. As a result, it is easy for a model to be overfitted. Secondly, the choice of hyperparameters, including smoothing techniques and interpolation weights, is crucial. If not properly tuned, these settings can further exacerbate the model's susceptibility to overfitting. As a result, the trigram model may struggle to generalize effectively to unseen data, leading to higher perplexity scores in the evaluation. 
+The figures below depict the cross-entropy and perplexity values before and after tuning. The observed decrease in the trigram model's performance after tuning can be attributed to a combination of factors. One of the most important ones is that the trigram model, being more complex and considering the conditional probability of a word based on the previous two words, is prone to overfitting. Our corpus is not so extended so the training and validation sets are not so big enough. As a result, it is easy for a model to be overfitted. As a result, the trigram model may struggle to generalize effectively to unseen data, leading to higher perplexity scores in the evaluation. 
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.8\textwidth]{HC_before_after.png}
+    \includegraphics[width=0.5\textwidth]{HC_before_after.png}
     \caption{Cross Entropy before and after Tuning}
     \label{fig:your_label}
 \end{figure}
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{perplexity_before_after.png}
+    \includegraphics[width=0.5\textwidth]{perplexity_before_after.png}
     \caption{Perplexity before and after Tuning}
     \label{fig:your_label}
 \end{figure}
-
-
-
 
 \section*{Generate Completions}
 
@@ -264,30 +262,32 @@ In our model we have the following approach:
     \item We select the next bigram to be added to the sentence based on the bigram's probability, ensuring that the sentence generation favors bigrams with higher probabilities. 
     \item We update the list of the already stored words for the next iteration to be the second word of the selected bigram. 
 \end{enumerate}
-\\
+
+
 The same procedure is strictly followed to the trigram model with the same modular steps.
 
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.8\textwidth]{predictions.png}
+    \includegraphics[width=0.6\textwidth]{predictions.png}
     \caption{Prediction examples for both bigram and trigram models}
     \label{fig:your_label}
 \end{figure}
 
 \section*{Context-aware Spelling Corrector}
-The subsequent phase of our project involved the development of a context-aware spelling corrector, which utilizes our trigram model, a beam search decoder, and the \href{https://tedboy.github.io/nlps/generated/generated/nltk.edit_distance.html}{Levenshtein distance} This spelling corrector is designed to rectify any errors or mistakes in words, enhancing the accuracy and readability of text. As for the algorithm, we first generate candidate corrections for the given word based on their Levenshtein distance from the original word. Then, we compute a score for each candidate correction based on a combination of the negative Levenshtein distance and our trigram language model score. Last but not least, we implement a Beam Search decoder for each word. Then, we select the top candidates based on their scores and narrows down the sequences to the best ones. The best correction for the word is the one with the maximum score. \\
-\newline
-\begin{figure}[ht]
+The following context-aware spelling corrector utilizes our trigram model, a beam search decoder, and the \href{https://tedboy.github.io/nlps/generated/generated/nltk.edit_distance.html}{Levenshtein distance}. This spelling corrector is designed to rectify any errors or mistakes in words, enhancing the accuracy and readability of text. We first generated some candidate corrections for the given word based on their Levenshtein distance from the original word. Then, we computed a score for each candidate correction based on a combination of the negative Levenshtein distance and our trigram language model score. Then, we implemented a Beam Search decoder for each word in order to select the top candidates based on their scores and narrows down the sequences to the best ones. The best correction for the word is the one with the maximum score. \\
+
+\begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{correction.png}
+    \includegraphics[width=0.6\textwidth]{correction.png}
     \caption{Misspelled and corrected examples}
     \label{fig:your_label}
 \end{figure}
+
 As observed, there are instances where our corrector performed as anticipated, while in some cases, it did not yield the expected results. This variability can be attributed to either the model's inability to identify the most suitable correction or the fact that the word in question did not exist in the vocabulary.
 
 \section*{Evaluate the Corrector}
-The next phase involved the utilization of an extended dataset to evaluate our Corrector. We chose to use the same test dataset that we previously employed for assessing our language models. However, we introduced a modification by replacing each non-space character of every test sentence with another random non-space character, with a small probability. Additionally, we attempted to replace each letter with another random letter. In cases where the word was represented as the "UNK" token, we replaced it with "y" in the list. We specifically selected 20 misspelled sentences and applied the Corrector to rectify them. As observed, the Corrector was successful in correcting some of the errors, but some mistakes still remained. 
+We used an extended dataset to evaluate our Corrector. We chose the same test dataset that we previously employed for assessing our language models and introduced a modification by replacing each non-space character of every test sentence with another random non-space character, with a small probability. Additionally, we attempted to replace each letter with another random letter to make it more challenging. In cases where the word was represented as the "UNK" token, we replaced it with "y". We specifically selected 20 misspelled sentences and applied the Corrector to rectify them. As observed, the Corrector was successful in correcting some of the errors, but some mistakes still remained. 
 
 \begin{figure}[ht]
     \centering
@@ -299,7 +299,7 @@ The next phase involved the utilization of an extended dataset to evaluate our C
 
 
 \section*{Metrics}
-WER and CER are metrics that indicate the amount of text in a handwriting that the applied HTR model did not read correctly
+WER and CER are metrics that indicate the amount of text in a handwriting that the applied HTR model did not read correctly.
 % \underline{CER AND WER COMPARISON ASSESSMENT}
 % % \\
 % A WER of 0.12 means that, on average, 12\% of the words in the recognized text (output of the bigram/trigram model) do not match the corresponding words in the reference or ground truth text. This indicates that there are word-level errors in the system's output. 
@@ -313,9 +313,8 @@ WER and CER are metrics that indicate the amount of text in a handwriting that t
 %     \caption{CER,WER Comparison}
 %     \label{fig:enter-label}
 % \end{figure}
-
 \subsection*{Word Error rate (WER)}
-WER is a metric used to evaluate the performance of systems that generate or correct sequences of words, such as automatic speech recognition systems or spelling correction systems. It measures the number of word-level errors made by a system when comparing its output to the reference or ground truth text. 
+WER is a metric used to evaluate the performance of systems that generate or correct sequences of words. It measures the number of word-level errors made by a system when comparing its output to the reference or ground truth text. 
 $$WER = \frac{S + I + D}{N}$$
 \begin{enumerate}
     \item $ S $ : the number of substitutions
@@ -339,7 +338,7 @@ $$WER = \frac{S + I + D}{N}$$
  
 \subsection*{Character Error Rate (CER)}
 CER is similar to WER but operates at the character level. It measures the accuracy of character-level transcriptions or corrections. CER quantifies the number of character-level errors made by a system when comparing its output to the reference text. Errors include substitutions, insertions, and deletions of individual characters. 
-$$WER = \frac{S + I + D}{N}$$
+$$CER = \frac{S + I + D}{N}$$
 
 % A WER of 0.12 means that, on average, 12\% of the words in the recognized text (output of the bigram/trigram model) do not match the corresponding words in the reference or ground truth text. This indicates that there are word-level errors in the system's output. 
 
@@ -349,7 +348,7 @@ $$WER = \frac{S + I + D}{N}$$
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.5\linewidth]{metrics.png}
+    \includegraphics[width=0.4\linewidth]{metrics.png}
     \caption{Average WER and CER}
     \label{fig:Averager WER for 3 sentences}
 \end{figure}
